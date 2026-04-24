@@ -64,7 +64,71 @@ Votre mission (si vous l'acceptez) : Concevoir une architecture **API-driven** d
 2. Création de l'instance EC2
 3. Création des API (+ fonction Lambda)
 4. Ouverture des ports et vérification du fonctionnement
+-----------------------------------------------------
+🚀 Orchestration EC2 via API Gateway & Lambda (LocalStack)
+Ce projet démontre la mise en place d'une architecture Serverless sur AWS (émulé par LocalStack) permettant de piloter une infrastructure cloud (démarrage/arrêt d'une instance EC2) via des requêtes HTTP.
 
+🏗️ Architecture du projet
+L'architecture repose sur trois composants clés :
+
+Amazon EC2 : L'instance cible que nous souhaitons piloter.
+
+AWS Lambda : Le "cerveau" contenant la logique Python (via boto3) pour agir sur EC2.
+
+API Gateway / Function URL : Le point d'entrée HTTP public qui permet d'invoquer la Lambda depuis un navigateur ou un terminal.
+
+🛠️ Guide d'utilisation
+1. Pré-requis
+Un environnement GitHub Codespaces.
+
+LocalStack installé et démarré avec un AUTH_TOKEN valide.
+
+L'outil awslocal installé (pip install awscli-local).
+
+2. Initialisation de l'infrastructure
+Tout d'abord, nous créons l'instance EC2 qui sera contrôlée :
+
+Bash
+awslocal ec2 run-instances --image-id ami-0907535bcb3aed0b6 --count 1 --instance-type t2.micro
+Note : Notez l'ID de l'instance généré (ex: i-99451ae8ec9ccba8a).
+
+3. Déploiement de la logique (Lambda)
+Le code se trouve dans lambda_function.py. Pour le déployer :
+
+Bash
+# Compression du code
+zip function.zip lambda_function.py
+
+# Création de la fonction
+awslocal lambda create-function \
+    --function-name MonPiloteEC2 \
+    --runtime python3.9 \
+    --zip-file fileb://function.zip \
+    --handler lambda_function.lambda_handler \
+    --role arn:aws:iam::000000000000:role/lambda-role
+4. Exposition de l'API
+Pour rendre la fonction accessible via Internet, nous activons une Function URL et ouvrons les ports :
+
+Générer l'URL : awslocal lambda create-function-url-config --function-name MonPiloteEC2 --auth-type NONE
+
+Dans l'onglet PORTS de VS Code, passer le port 4566 en Public.
+
+🚦 Tests et Vérification
+Démarrer l'instance
+Utilisez la commande curl suivante (en adaptant l'URL de votre Codespace) :
+
+Bash
+curl -X POST "https://jubilant-space-garbanzo-5wg5rpvxg972v7x6-4566.app.github.dev/2021-11-07/functions/MonPiloteEC2/invocations?action=status" \
+     -d '{"queryStringParameters": {"action": "start"}}'
+Vérifier l'état
+Pour confirmer que l'ordre a été exécuté, vérifiez le statut réel de l'instance :
+
+Bash
+awslocal ec2 describe-instances --instance-ids i-99451ae8ec9ccba8a --query 'Reservations[0].Instances[0].State.Name'
+Résultat attendu : "running"
+
+📝 Processus de travail
+Pendant ce TP, j'ai dû résoudre des problématiques de routage réseau liées au tunnel sécurisé de GitHub Codespaces. L'utilisation des en-têtes (Headers) et des ports publics a été essentielle pour permettre la communication entre mon navigateur et l'émulateur LocalStack Pro.
 ---------------------------------------------------
 Séquence 4 : Documentation  
 Difficulté : Facile (~30 minutes)
