@@ -82,7 +82,9 @@ API Gateway / Function URL : Le point d'entrée HTTP public qui permet d'invoque
 Un environnement GitHub Codespaces.
 
 LocalStack installé et démarré avec un AUTH_TOKEN valide.
-
+pip install localstack
+export LOCALSTACK_AUTH_TOKEN=ls-tUKoyImO-xAli-7941-Puru-PUdA02712c83
+localstack -d start
 L'outil awslocal installé (pip install awscli-local).
 
 2. Initialisation de l'infrastructure
